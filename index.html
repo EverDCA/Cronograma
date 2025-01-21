@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronograma de Atención CRAV Sincelejo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #fdd835;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #333;
+            color: white;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .event-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .event-list li {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+        .calendar-link {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background-color: #388e3c;
+            color: white;
+            padding: 15px 0;
+            text-decoration: none;
+            font-size: 1.2em;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .calendar-link:hover {
+            background-color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://firebasestorage.googleapis.com/v0/b/imagenes-publicas-61916.appspot.com/o/banner.png.png?alt=media&token=f0f16626-fc85-4fe4-9093-97f4ecdc7a9d" alt="Cronograma de Atención CRAV Sincelejo">
+    </header>
+
+    <div class="container">
+        <h2>Accede y consulta el Cronograma de Atención</h2>
+        <p>Haz clic en el siguiente enlace para ver el calendario del cronograma de atención en la plataforma de Outlook.</p>
+
+        <a href="https://outlook.office365.com/calendar/view/month" class="calendar-link" target="_blank">Ir al Cronograma</a>
+
+        <h3>Eventos Agendados:</h3>
+        <ul class="event-list" id="eventList">
+            <!-- Aquí se mostrarán los eventos del calendario -->
+        </ul>
+    </div>
+
+    <footer>
+        &copy; 2025 Unidad para las Víctimas - Todos los derechos reservados.
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-graph-client/3.0.3/msal.min.js"></script>
+    <script>
+        // Configuración de la aplicación
+        const clientId = 'TU_CLIENT_ID';
+        const tenantId = 'TU_TENANT_ID';
+        const clientSecret = 'TU_CLIENT_SECRET'; // No recomendado para clientes, solo para servicios
+
+        const msalConfig = {
+            auth: {
+                clientId: clientId,
+                authority: `https://login.microsoftonline.com/${tenantId}`
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+        // Función para iniciar sesión
+        function login() {
+            msalInstance.loginPopup({
+                scopes: ["User.Read", "Calendars.Read"]
+            }).then((loginResponse) => {
+                console.log("Usuario autenticado:", loginResponse);
+                getCalendarEvents(loginResponse.accessToken);
+            }).catch((error) => {
+                console.error("Error de autenticación:", error);
+            });
+        }
+
+        // Obtener los eventos del calendario
+        function getCalendarEvents(accessToken) {
+            const headers = {
+                Authorization: `Bearer ${accessToken}`,
+            };
+
+            fetch("https://graph.microsoft.com/v1.0/me/events", {
+                method: "GET",
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                const events = data.value;
+                const eventList = document.getElementById("eventList");
+                eventList.innerHTML = ""; // Limpiar la lista antes de agregar nuevos eventos
+
+                events.forEach(event => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<strong>${event.subject}</strong><br>${new Date(event.start.dateTime).toLocaleString()} - ${new Date(event.end.dateTime).toLocaleString()}`;
+                    eventList.appendChild(li);
+                });
+            })
+            .catch(error => console.error("Error al obtener eventos:", error));
+        }
+
+        // Llamar a login cuando se cargue la página
+        window.onload = function() {
+            login();
+        }
+    </script>
+</body>
+</html>
